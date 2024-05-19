@@ -1,25 +1,59 @@
-#include <Modelec/CLParser.h>
-
-#include <iostream>
+#include <Modelec/TCPClient.h>
+#include <Modelec/Utils.h>
+#include <unistd.h>
 
 int main(int argc, char* argv[]) {
 
-    CLParser parser(argc, argv);
-
-    if (parser.hasOption("help")) {
-        std::cout << "Usage: " << parser.getPositionalArgument(0) << " [options]" << std::endl;
-        std::cout << "Options:" << std::endl;
-        std::cout << "  --help: Display this help message" << std::endl;
-        std::cout << "  --port <port>: Set the port to listen to" << std::endl;
-        return 0;
+    int port = 8080;
+    if (argc >= 2) {
+        port = std::stoi(argv[1]);
     }
 
-    std::optional<std::string> port = parser.getOption("port");
+    bool loggerMode = false;
 
-    if (port.has_value()) {
-        std::cout << port.value() << std::endl;
-    } else {
-        std::cout << "No port specified" << std::endl;
+    if (argc >= 3) {
+        loggerMode = Modelec::contains(argv[2], "logger");
+    }
+
+    TCPClient client("127.0.0.1", port); // Replace "127.0.0.1" with the IP address of your server and 8080 with the port number
+
+    client.start();
+
+    while (!client.shouldStop()) {
+        if (loggerMode) {
+            usleep(500'000);
+        } else {
+            std::string message;
+            std::getline(std::cin, message);
+
+            if (message == "quit") {
+                client.stop();
+                break;
+            }
+            if (message == "ready") {
+                client.sendMessage("lidar;strat;ready;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("aruco;strat;ready;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("arduino;strat;ready;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("tirette;strat;ready;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("servo_moteur;strat;ready;1");
+            } else if (message == "pong") {
+                client.sendMessage("lidar;ihm;pong;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("aruco;ihm;pong;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("arduino;ihm;pong;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("tirette;ihm;pong;1");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                client.sendMessage("servo_moteur;ihm;pong;1");
+            } else {
+                client.sendMessage(message);
+            }
+        }
     }
 
     return 0;
