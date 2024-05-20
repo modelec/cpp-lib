@@ -19,7 +19,24 @@ public:
             return defaultValue;
         }
 
-        return static_cast<T>(std::stod(_options.at(option)));
+        try {
+            return static_cast<T>(std::stod(_options.at(option)));
+        } catch (std::exception& e) {
+            return defaultValue;
+        }
+    }
+
+    template <typename T>
+    [[nodiscard]] std::optional<T> getOption(const std::string& option) const {
+        if (!hasOption(option)) {
+            return std::nullopt;
+        }
+
+        try {
+            return static_cast<T>(std::stod(_options.at(option)));
+        } catch (std::exception& e) {
+            return std::nullopt;
+        }
     }
 
     [[nodiscard]] std::optional<std::string> getOption(const std::string& option) const;
