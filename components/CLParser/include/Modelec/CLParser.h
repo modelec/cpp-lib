@@ -18,7 +18,7 @@ public:
     [[nodiscard]] std::string getOption(const std::string& option, const std::string& defaultValue) const;
 
     template <typename T>
-    [[nodiscard]] T getOption(const std::string& option, T defaultValue) const {
+    [[nodiscard]] typename std::enable_if<std::is_arithmetic<T>::value, T>::type getOption(const std::string& option, T defaultValue) const {
         if (!hasOption(option)) {
             return defaultValue;
         }
@@ -31,7 +31,7 @@ public:
     }
 
     template <typename T>
-    [[nodiscard]] std::optional<T> getOption(const std::string& option) const {
+    [[nodiscard]] std::optional<typename std::enable_if<std::is_arithmetic<T>::value, T>::type> getOption(const std::string& option) const {
         if (!hasOption(option)) {
             return std::nullopt;
         }
@@ -48,7 +48,7 @@ public:
     [[nodiscard]] std::string getPositionalArgument(int index) const;
 
     template <typename T>
-    [[nodiscard]] T getPositionalArgument(int index) const {
+    [[nodiscard]] typename std::enable_if<std::is_arithmetic<T>::value, T>::type getPositionalArgument(int index) const {
         if (!hasPositionalArgument(index)) {
             return T();
         }
