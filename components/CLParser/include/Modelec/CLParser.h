@@ -13,6 +13,10 @@ public:
 
     [[nodiscard]] bool hasOption(const std::string& option) const;
 
+    [[nodiscard]] std::optional<std::string> getOption(const std::string& option) const;
+
+    [[nodiscard]] std::string getOption(const std::string& option, const std::string& defaultValue) const;
+
     template <typename T>
     [[nodiscard]] T getOption(const std::string& option, T defaultValue) const {
         if (!hasOption(option)) {
@@ -39,13 +43,22 @@ public:
         }
     }
 
-    [[nodiscard]] std::optional<std::string> getOption(const std::string& option) const;
-
-    [[nodiscard]] std::string getOption(const std::string& option, const std::string& defaultValue) const;
-
     [[nodiscard]] bool hasPositionalArgument(int index) const;
 
     [[nodiscard]] std::string getPositionalArgument(int index) const;
+
+    template <typename T>
+    [[nodiscard]] T getPositionalArgument(int index) const {
+        if (!hasPositionalArgument(index)) {
+            return T();
+        }
+
+        try {
+            return static_cast<T>(std::stod(_argv[index]));
+        } catch (std::exception& e) {
+            return T();
+        }
+    }
 
     [[nodiscard]] int positionalArgumentsCount() const;
 
