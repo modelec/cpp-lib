@@ -2,7 +2,9 @@
 
 #include <map>
 #include <optional>
+#include <sstream>
 #include <string>
+#include <iostream>
 
 class CLParser {
 
@@ -18,29 +20,38 @@ public:
     [[nodiscard]] std::string getOption(const std::string& option, const std::string& defaultValue) const;
 
     template <typename T>
-    [[nodiscard]] typename std::enable_if<std::is_arithmetic<T>::value, T>::type getOption(const std::string& option, T defaultValue) const {
+    [[nodiscard]] std::enable_if_t<std::is_arithmetic_v<T>, T> getOption(const std::string& option, T defaultValue) const {
         if (!hasOption(option)) {
             return defaultValue;
         }
 
-        try {
-            return static_cast<T>(std::stod(_options.at(option)));
-        } catch (std::exception& e) {
+        T value;
+        std::istringstream iss(_options.at(option));
+        iss >> value;
+
+        if (iss.fail() || !iss.eof()) {
+            std::cout << "Failed convert" << std::endl;
             return defaultValue;
         }
+
+        return value;
     }
 
     template <typename T>
-    [[nodiscard]] std::optional<typename std::enable_if<std::is_arithmetic<T>::value, T>::type> getOption(const std::string& option) const {
+    [[nodiscard]] std::optional<std::enable_if_t<std::is_arithmetic_v<T>, T>> getOption(const std::string& option) const {
         if (!hasOption(option)) {
             return std::nullopt;
         }
 
-        try {
-            return static_cast<T>(std::stod(_options.at(option)));
-        } catch (std::exception& e) {
+		T value;
+		std::istringstream iss(_options.at(option));
+        iss >> value;
+
+        if (iss.fail() || !iss.eof()) {
             return std::nullopt;
         }
+
+        return value;
     }
 
     [[nodiscard]] bool hasPositionalArgument(int index) const;
@@ -48,16 +59,20 @@ public:
     [[nodiscard]] std::string getPositionalArgument(int index) const;
 
     template <typename T>
-    [[nodiscard]] typename std::enable_if<std::is_arithmetic<T>::value, T>::type getPositionalArgument(int index) const {
+    [[nodiscard]] std::enable_if_t<std::is_arithmetic_v<T>, T> getPositionalArgument(int index) const {
         if (!hasPositionalArgument(index)) {
             return T();
         }
 
-        try {
-            return static_cast<T>(std::stod(_argv[index]));
-        } catch (std::exception& e) {
+        T value;
+        std::istringstream iss(_argv[index]);
+        iss >> value;
+
+        if (iss.fail() || !iss.eof()) {
             return T();
         }
+
+        return value;
     }
 
     [[nodiscard]] int positionalArgumentsCount() const;
