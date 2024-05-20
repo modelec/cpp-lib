@@ -4,6 +4,8 @@
 #include <string>
 namespace Modelec
 {
+    #define PI 3.14159265358979323846
+
     bool startWith(const std::string& str, const std::string& start);
 
     bool endsWith(const std::string& str, const std::string& end);
