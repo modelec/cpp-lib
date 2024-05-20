@@ -1,16 +1,20 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MySecondProject)
+project(clientExample)
 
 # Find the shared library package
 find_package(Modelec COMPONENTS
         CLParser
+        TCPClient
+        Utils
     REQUIRED)
 
 # Define the executable
-add_executable(MyExecutable main.cpp)
+add_executable(client main.cpp)
 
 # Link the shared library to the executable
-target_link_libraries(MyExecutable
+target_link_libraries(client
         Modelec::CLParser
+        Modelec::TCPClient
+        Modelec::Utils
 )

@@ -1,19 +1,15 @@
 #include <Modelec/TCPClient.h>
 #include <Modelec/Utils.h>
+#include <Modelec/CLParser.h>
 #include <unistd.h>
 
 int main(int argc, char* argv[]) {
 
-    int port = 8080;
-    if (argc >= 2) {
-        port = std::stoi(argv[1]);
-    }
+    CLParser parser(argc, argv);
 
-    bool loggerMode = false;
+    int port = std::stoi(parser.getOption("port", "8080"));
 
-    if (argc >= 3) {
-        loggerMode = Modelec::contains(argv[2], "logger");
-    }
+    bool loggerMode = parser.hasOption("logger");
 
     TCPClient client("127.0.0.1", port); // Replace "127.0.0.1" with the IP address of your server and 8080 with the port number
 
