@@ -7,7 +7,7 @@ int main(int argc, char* argv[]) {
 
     CLParser parser(argc, argv);
 
-    int port = parser.getOption("port", 8080);
+    int port = parser.getOption<int>("port", 8080);
 
     bool loggerMode = parser.hasOption("logger");
 
