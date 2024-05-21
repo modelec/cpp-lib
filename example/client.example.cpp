@@ -2,8 +2,18 @@
 #include <Modelec/Utils.h>
 #include <Modelec/CLParser.h>
 #include <unistd.h>
+#include <iostream>
+#include <csignal>
+#include <atomic>
+
+std::atomic<bool> running(true);
+
+void signalHandler(int signal) {
+    running = false;
+}
 
 int main(int argc, char* argv[]) {
+    signal(SIGINT, signalHandler);
 
     CLParser parser(argc, argv);
 
@@ -15,7 +25,7 @@ int main(int argc, char* argv[]) {
 
     client.start();
 
-    while (!client.shouldStop()) {
+    while (!client.shouldStop() && !running) {
         if (loggerMode) {
             usleep(500'000);
         } else {
