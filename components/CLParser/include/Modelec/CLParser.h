@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <vector>
 
 class CLParser {
 
@@ -79,8 +80,10 @@ public:
 
     ~CLParser();
 
+
+
 private:
-    std::string* _argv;
+    std::vector<std::string> _argv;
     int _argc;
 
     std::map<std::string, std::string> _options;

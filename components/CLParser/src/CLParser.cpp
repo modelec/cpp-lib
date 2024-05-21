@@ -1,7 +1,7 @@
 #include <Modelec/CLParser.h>
 
 CLParser::CLParser(int argc, char **argv) : _argc(argc) {
-    this->_argv = new std::string[argc];
+    this->_argv = std::vector<std::string>(argc);
     for (int i = 0; i < argc; i++) {
         this->_argv[i] = argv[i];
     }
@@ -54,15 +54,6 @@ int CLParser::positionalArgumentsCount() const {
     return this->_argc;
 }
 
-CLParser::~CLParser() {
-    delete[] this->_argv;
-}
+CLParser::~CLParser() = default;
 
-CLParser::CLParser(const CLParser &other) : _argc(other._argc) {
-    this->_argv = new std::string[other._argc];
-    for (int i = 0; i < other._argc; i++) {
-        this->_argv[i] = other._argv[i];
-    }
-
-    this->_options = other._options;
-}
+CLParser::CLParser(const CLParser &other) = default;
