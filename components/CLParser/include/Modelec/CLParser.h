@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+#include <Modelec/CLParser/Type.h>
+
 class CLParser {
 
 public:
@@ -16,42 +18,25 @@ public:
 
     [[nodiscard]] bool hasOption(const std::string& option) const;
 
-    [[nodiscard]] std::optional<std::string> getOption(const std::string& option) const;
-
-    [[nodiscard]] std::string getOption(const std::string& option, const std::string& defaultValue) const;
-
     template <typename T>
-    [[nodiscard]] std::enable_if_t<std::is_arithmetic_v<T>, T> getOption(const std::string& option, T defaultValue) const {
+    [[nodiscard]] T getOption(const std::string& option, T defaultValue) const {
         if (!hasOption(option)) {
             return defaultValue;
         }
 
-        T value;
-        std::istringstream iss(_options.at(option));
-        iss >> value;
-
-        if (iss.fail() || !iss.eof()) {
-            std::cout << "Failed convert" << std::endl;
-            return defaultValue;
-        }
-
+        T value = T();
+        parseString(_options.at(option), ParameterTypeTraits<T>::type, static_cast<void *>(&value));
         return value;
     }
 
     template <typename T>
-    [[nodiscard]] std::optional<std::enable_if_t<std::is_arithmetic_v<T>, T>> getOption(const std::string& option) const {
+    [[nodiscard]] std::optional<T> getOption(const std::string& option) const {
         if (!hasOption(option)) {
             return std::nullopt;
         }
 
-		T value;
-		std::istringstream iss(_options.at(option));
-        iss >> value;
-
-        if (iss.fail() || !iss.eof()) {
-            return std::nullopt;
-        }
-
+        T value = T();
+        parseString(_options.at(option), ParameterTypeTraits<T>::type, static_cast<void *>(&value));
         return value;
     }
 
@@ -60,19 +45,13 @@ public:
     [[nodiscard]] std::string getPositionalArgument(int index) const;
 
     template <typename T>
-    [[nodiscard]] std::enable_if_t<std::is_arithmetic_v<T>, T> getPositionalArgument(int index) const {
+    [[nodiscard]] T getPositionalArgument(int index) const {
         if (!hasPositionalArgument(index)) {
             return T();
         }
 
-        T value;
-        std::istringstream iss(_argv[index]);
-        iss >> value;
-
-        if (iss.fail() || !iss.eof()) {
-            return T();
-        }
-
+        T value = T();
+        parseString(_argv[index], ParameterTypeTraits<T>::type, static_cast<void *>(&value));
         return value;
     }
 
@@ -80,7 +59,8 @@ public:
 
     ~CLParser();
 
-
+protected:
+    static void parseString(const std::string& str, ParameterType type, void* value) ;
 
 private:
     std::vector<std::string> _argv;
