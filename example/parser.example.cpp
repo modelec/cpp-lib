@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Port : " << port << std::endl;
 
-    auto test = parser.getOption<unsigned long long>("long");
+    auto test = parser.getOption<long>("long");
 
     if (test.has_value()) {
         std::cout << test.value() << std::endl;

@@ -15,7 +15,7 @@ enum ParameterType
     CONST_CHAR_PTR
 };
 
-template<typename T> struct ParameterTypeTraits {};
+template<typename T, typename E = void> struct ParameterTypeTraits {};
 
 template<> struct ParameterTypeTraits<std::string> {
     static constexpr ParameterType type = STRING;
@@ -55,4 +55,12 @@ template<> struct ParameterTypeTraits<char*> {
 
 template<> struct ParameterTypeTraits<const char*> {
     static constexpr ParameterType type = CONST_CHAR_PTR;
+};
+
+template<typename T> struct ParameterTypeTraits<T, std::enable_if<std::is_same_v<T, std::string>>> {
+    static constexpr ParameterType type = STRING;
+};
+
+template<typename T> struct ParameterTypeTraits<T, std::enable_if_t<std::is_enum_v<T>>> {
+    static constexpr ParameterType type = INT;
 };
