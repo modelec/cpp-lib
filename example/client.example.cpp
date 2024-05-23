@@ -5,45 +5,43 @@
 #include <iostream>
 #include <csignal>
 #include <atomic>
+#include <memory>
+#include <thread>
+#include <fcntl.h>
+#include <mutex>
+#include <sys/select.h>
+#include <poll.h>
 
 std::atomic<bool> shouldStop = false;
 
-void signalHandler( int signum ) {
+void signalHandler(int signum) {
     shouldStop = true;
 }
 
-void messageHandler(TCPClient& client) {
-    std::string message;
+void userInputHandler(const std::shared_ptr<TCPClient>& client) {
+    std::string input;
 
-    while (!shouldStop && !client.shouldStop()) {
-        std::getline(std::cin, message);
+    while (!client->shouldStop() && !shouldStop) {
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
 
-        if (message == "quit") {
-            client.stop();
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 1000000; // 100 milliseconds
+
+        int result = select(STDIN_FILENO + 1, &read_fds, nullptr, nullptr, &timeout);
+
+        if (result > 0 && FD_ISSET(STDIN_FILENO, &read_fds)) {
+            std::string line;
+            std::getline(std::cin, line);
+            if (!line.empty()) {
+                client->sendMessage(line);
+            }
+        } else if (result < 0) {
+            // Some other error occurred
+            std::cerr << "Error reading input" << std::endl;
             break;
-        }
-        if (message == "ready") {
-            client.sendMessage("lidar;strat;ready;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("aruco;strat;ready;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("arduino;strat;ready;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("tirette;strat;ready;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("servo_moteur;strat;ready;1");
-        } else if (message == "pong") {
-            client.sendMessage("lidar;ihm;pong;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("aruco;ihm;pong;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("arduino;ihm;pong;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("tirette;ihm;pong;1");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            client.sendMessage("servo_moteur;ihm;pong;1");
-        } else {
-            client.sendMessage(message);
         }
     }
 }
@@ -51,25 +49,33 @@ void messageHandler(TCPClient& client) {
 int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
 
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+
     CLParser clParser(argc, argv);
 
     int port = clParser.getOption<int>("port", 8080);
-
     auto host = clParser.getOption("host", "127.0.0.1");
-
     bool loggerMode = clParser.hasOption("logger");
 
-    TCPClient client(host, port); // Replace "127.0.0.1" with the IP address of your server and 8080 with the port number
+    std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>(host, port);
 
-    client.start();
+    client->start();
+
+    // Start the user input handling thread
+    std::thread inputThread;
 
     if (!loggerMode) {
-        std::thread messageThread(messageHandler, std::ref(client));
-        messageThread.detach();
+        inputThread = std::thread(userInputHandler, client);
+        inputThread.detach();
     }
 
-    while (!client.shouldStop() && !shouldStop) {
+    while (!client->shouldStop() && !shouldStop) {
         usleep(500'000);
+    }
+
+    if (inputThread.joinable()) {
+        inputThread.join();
     }
 
     return 0;
