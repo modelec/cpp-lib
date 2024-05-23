@@ -7,11 +7,14 @@
 #include <unistd.h>
 #include <cstring>
 #include <thread>
+#include <fcntl.h>
+#include <atomic>
 
 class TCPClient {
 private:
     int clientSocket;
     sockaddr_in serverAddress{};
+    std::thread receiveThread;
 protected:
     bool running;
 
