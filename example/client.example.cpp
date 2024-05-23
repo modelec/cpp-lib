@@ -28,7 +28,7 @@ void userInputHandler(const std::shared_ptr<TCPClient>& client) {
 
         struct timeval timeout;
         timeout.tv_sec = 0;
-        timeout.tv_usec = 1000000; // 100 milliseconds
+        timeout.tv_usec = 100000; // 10 milliseconds
 
         int result = select(STDIN_FILENO + 1, &read_fds, nullptr, nullptr, &timeout);
 
@@ -62,7 +62,6 @@ int main(int argc, char* argv[]) {
 
     client->start();
 
-    // Start the user input handling thread
     std::thread inputThread;
 
     if (!loggerMode) {
